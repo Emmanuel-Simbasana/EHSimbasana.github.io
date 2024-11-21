@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .chat-container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            position: relative;
+        }
+        .chat-box {
+            height: 350px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .message.user {
+            background-color: #d1e7dd;
+            align-self: flex-end;
+        }
+        .message.bot {
+            background-color: #f8d7da;
+            align-self: flex-start;
+        }
+        .user-input {
+            display: flex;
+            margin-top: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .suggestions {
+            margin-top: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+        .suggestion {
+            padding: 8px;
+            background: #e9ecef;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .suggestion:hover {
+            background: #d9d9d9;
+        }
+        .call-icon {
+            position: fixed;
+            bottom: 20px;
+            left: 5px;
+            width: 40px;
+            height: 40px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+    .intro-message {
+        margin-bottom: 20px;
+        font-style: italic;
+        color: #555;
+    }
+    .date-time {
+        font-size: 16px;
+        color: #800;
+        margin-bottom: 10px;
+    }
+    .call-icon:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>Live Chat</h2>
+    <div class="date-time" id="date-time"></div>
+    <div class="intro-message" id="intro-message"></div>
+    <div class="chat-box" id="chat-box"></div>
+    <div class="user-input">
+        <input type="text" id="user-input" placeholder="Uliza swali lako hapa...">
+        <button id="send-button" disabled>Uliza</button>
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+</div>
+
+<div class="call-icon" id="call-icon" onclick="makeCall()">
+    📞
+</div>
+
+<script>
+    const FAQs = {
+        "Wewe ni nani hasa?": "Jina langu ni ESimbaSolutions, ni AI(akili mnemba), nimetengenezwa na EMMANUEL SIMBASANA mahususi kwa ajili ya kumsaidia kuwasiliana na watu wa muhimu kama wewe hapo wakati anapokuwa na kazi, darasani, sehemu za Ibada au wakati wa usiku akiwa amelala, lengo ni kuhakikisha kazi zake zinafanikiwa kwa saa 24 pasipo kuingilia ratiba zake nyingine. Karibu kuuliza swali lolote jingine.",
+        "Kazi yako ni nini?": "Kazi yangu ni kuwasiliana nawe mpendwa/mteja wa karibu sana wa EMMANUEL SIMBASANA ili kupata taarifa zake muda wowote ule utakao hata kama akiwa amebanana kiasi gani, Hivyo usijali mpendwa, utapata majibu ya kila swali utakalouliza tena kwa 100% bila kukosea wala kudanganya taarifa zake.",
+        "Je, ninaweza kuona picha yake Emmanuel Simbasana?": "Hapana hauwezi kuona picha zake Emmanuel Simbasana kwa sasa",
+        "Je, Emmanuel Simbasana ana kazi gani?": "Emmanuel Simbasana ni Mwanafunzi kutoka chuo kikuu cha sayansi na Teknolojia Mbeya(MUST), na ni mjasiriamali mdogo anayependelea sana kufanya kazi na mfumo wa biashara wa kusaidia watu wa Network marketing maarufu kama MLM (kama unahitaji kujua zaidi kuhusu huu mfumo tafadhari wasiliana nae zaidi kwa kukutana nae au kupiga simu), hali kadhalika anajishughulisha na kazi za uandishi na uandaaji wa nakala zitolewazo mashuleni, maofisini, na mitandaoni kama vile kuomba mikopo ya elimu ya juu kutoka bodi ya mikopo(HESLB), kuandaa ripoti za assignments n.k. Kujua mengi wasiliana nae kwa nambari za simu 0755878126 au 0684970956 au bofya alama ya kupiga simu 📞 hapa chini kushoto.",    
+        "Ninawezaje kumpata Emmanuel Simbasana nifanye mawasiliano nae?": `Unaweza kumpata Emmanuel Simbasana kwa nambari za simu au barua pepe zilizoorodheshwa hapa chini: 
+        •0755878126   au             
+        •0684970956
+        •emmanuelsimbasana03@gmail.com
+        •emmanuelsimbasana5@gmail.com
+        `,
+       "Je Emmanuel Simbasana anasoma?": "Ndiyo, Simbasana ni mwanafunzi anasoma.",
+        "Emmanuel Simbasana anasoma wapi?": "Emmanuel Simbasana anasoma katika Chuo kikuu cha sayansi na Taknolojia Mbeya (MUST), kilichopo mkoani Mbeya, Tanzania.",
+        "Emmanuel Simbasana anasoma mwaka wa ngapi?": "Kwa mwaka huu wa masomo 2024/2025, Emmanuel Simbasana anasoma Mwaka wa pili chuoni MUST.",
+        "Je Emmanuel Simbasana anaweza kutengeneza AI nzuri kwa ajili yangu?": "Ndiyo Emmanuel Simbasana yupo pia kwa ajili yako kutengeneza AI kama mimi kwa ajili yako kwa ufanisi wa 100% na kwa muda mfupi sana, hauhitaji kuwa na uzoefu wowote wa coding yeye atakusaidia tu. muhimu zaidi wasiliana nae kwa kupiga simu kwa nambari 0755878126 au 0684970956. au bofya alama hiyo ya kupiga simu chini kushoto.",
+        "Je, Emmanuel Simbasana ameoa?": "Hapana Simbasana ni mwanafunzi, bado hajaoa.",
+        "Gharama za kutengeneza AI ni kiasi gani?": "Asante kwa sababu umeonesha nia ya kutengeneza AI kwa ajili yako, lakini kujua gharama za kutengeneza AI kama mimi, wasiliana na Emmanuel Simbasana kwa nambari za simu 0755878126/0684970956 au baruapepe emmanuelsimbasana03@gmail.com",
+        "Emmanuel Simbasana ni mwenyeji wa wapi?": "Emmanuel Simbasana ni mwenyeji wa mkoa wa Mwanza nchini Tanzania.",
+        "Emmanuel Simbasana ni kabila gani?": "Samahani, taarifa za kabila lake Simbasana sina ridhaa ya kusema mahali hapa. Lakini usijali uliza swali jingine lolote nitakupa majibu.",
+        "Je, unakusanya taarifa zangu?": "Hapana, tunazingatia sera ya faragha ya wewe mpendwa/mteja wetu, hivyo hakuna taarifa zozote tunachukua toka kwako.",
+        "Emmanuel Simbasana anapendelea nini zaidi(hobbies)?": "Emmanuel Simbasana anapendelea sana kujifunza mfumo wa kibiashara wa Network marketing, kusoma vitabu, na uandishi.",
+        "Kazi anazotoa Emmanuel Simbasana ni kama zipi?": `Emmanuel Simbasana anatoa kazi zifuatazo:
+        1•Uandishi wa nakala za MS Word, Powerpoint presentation, MS Excel, kwa assignments na kazi binafsi.
+        2•Uandishi wa ripoti mashuleni na maofisini.
+        3•Kusajili akaunti ajira portal.
+        4•Kuomba mkopo elimu ya juu(HESLB) kwa mfumo wa olams.
+        5•Kutengeneza TIN(Taxpayer Identification Number).
+        6•Kuandaa videos na templates za birthday, recognitions, harusi na matangazo ya kibiashara.
+        7•kufungua kurasa za facebook na Instagram na mitandaovmingine ya kijamii.
+        8•Kupiga windows (Window installation). pamoja na kazi nyingine nyingi zinazohusiana na hayo
+        9•Wasiliana nae kwa nambari za Simu 0755878126/0684970956 au bofya alama ya kupiga (call icon) iliyo chini kushoto kwa ukurasa huu.
+        `,
+        "Watu muhimu zaidi kwenye maisha ya Emmanuel Simbasana ni akina nani?": "Watu muhimu zaidi kwenye maisha ya Emmanuel ni wewe hapo mteja/mpendwa wa thamani.",
+        "Kipato chake Emmanuel Simbasana ni kiasi gani?": "Samahani!, Sina ruhusa ya kutaja Kipato chake Emmanuel Simbasana. Naweza kukusaidia kwa maswali mengine mpendwa usijali.",
+        "Nifanye nini kufikia malengo na ndoto zangu?":"Ili kufikia mafanikio binafsi, ni muhimu kuweka malengo ya wazi na kujifunza kila siku, huku ukijitunza kimwili na kiakili. Fanya kazi kwa bidii na nidhamu, jenga mtandao wa watu wanaokuhimiza, na kumbatia changamoto kama fursa za kujifunza. Pia, zingatia maadili katika shughuli zako na tathmini maendeleo yako mara kwa mara ili kuboresha mikakati yako. Hizi ni hatua muhimu katika kujenga msingi wa mafanikio na kuishi maisha yenye kuridhisha.",
+        "Je wewe AI ulitengenezwaje?": "Mimi ni mfano wa akili bandia ulioandaliwa na EMMANUEL SIMBASANA kupitia mchakato wa kujifunza mashine, ambapo data kubwa ya maandiko ilikusanywa kutoka vyanzo mbalimbali kama mtandao, vitabu, na makala; nilifundishwa kuelewa muundo wa lugha na maana, na kisha kupimwa na kurekebishwa ili kuboresha utendaji wangu, yote haya yakitumia algorithimu za kisasa za kujifunza mashine na kupata sasisho mara kwa mara ili kuongeza maarifa yangu.",
+        "Ulitengenezwa lini?": "Kutengenezwa kwangu ni mchakato wa muda mrefu lakini nilizinduliwa rasmi tarehe 18/11/2024.",
+        "una neno gani la kumwambia kijana kama mimi ili nifikie mwisho ulio mzuri?": "Kama kijana, ili kufikia mwisho mzuri, anza kwa kuweka malengo ya wazi na ya kufikiwa katika maisha yako, na uunde mpango wa hatua za kuzitekeleza. Jifunze kwa bidii, tafuta fursa za kujitolea au kufanya kazi, na jenga uhusiano mzuri na watu wanaokuhimiza. Jitunze kimwili na kiakili kwa kufanya mazoezi, kula vizuri, na kutafakari. Pia, kuwa na mtazamo chanya na uvumilivu unapokutana na changamoto, na usisahau kuthamini maadili na uwazi katika kila unachofanya. Hizi zitakusaidia kujenga msingi thabiti wa mafanikio na furaha katika maisha yako.",
+        "Kwa nini Emmanuel Simbasana hayuko hewani muda huu?": "Sababu kuu zinazoweza kumfanya Emmanuel Simbasana kutokuwa hewani mda huu zinaweza kuwa: √√Yupo darasani  √√Anashughulika na kazi nyingine za watu √√Yupo sehemu za Ibada au √√Amelala",
+        "Unadhani kwa mtazamo wako au mtazamo wa Simbasana, Elimu ya Tanzania inaweza kusaidiaje vijana kama mimi?": "Elimu ya Tanzania inawapa vijana msingi wa maarifa na ujuzi muhimu, ingawa inakabiliwa na changamoto kama ukosefu wa rasilimali na mbinu za kisasa. Hata hivyo, vijana wanaweza kujitambua na kufanikiwa kwa kutumia maarifa wanayopata darasani kama msingi wa kuendeleza ujuzi wa vitendo kupitia shughuli za kujitolea, mafunzo ya ufundi, na miradi ya biashara. Kwa kuzingatia umuhimu wa kujifunza nje ya darasani, vijana wanaweza kujiimarisha na kujenga mtandao wa kibiashara na kijamii, wakitumia fursa za teknolojia na ubunifu ili kukabiliana na changamoto na kujifunza jinsi ya kuwa viongozi wa mabadiliko katika jamii zao. Hivyo, elimu inawawezesha vijana kuwa na mtazamo mpana na kujiandaa kwa ajili ya maisha ya baadaye.",
+        "Asante sana na nimefurahi sana kuwasiliana nawe": "Nashukuru sana! Nimefurahi pia kuwasiliana nawe. Ikiwa unahitaji ushauri zaidi au una maswali mengine, usisite kuniuliza au kumtafuta Emmanuel Simbasana upate kubadilishana nae uzoefu. Nakutakia kila la kheri katika malengo yako!",
+        "Kwani Emmanuel Simbasana amesoma sana au ana akili sana mpaka akakutengeneza wewe?": "Hapana, Emmanuel simbasana si msomi sana au mwenye akili sana kuliko wengine bali ni mtu mwenye bidii ya kujifunza kila wakati, amewekeza katika utafiti wa kina na maendeleo ya kiteknolojia, akitumia mbinu za kisasa za kujifunza kwa mashine na akili bandia ili kutengeneza mifano kama mimi. Hii inajumuisha ukusanyaji wa data nyingi, mafunzo ya mifano kwenye supercomputers, na uelewa wa lugha, ambayo inaruhusu mimi kutoa majibu sahihi na ya maana. Hivyo, ni matokeo ya juhudi kubwa za kitaaluma na uvumbuzi katika uwanja wa teknolojia.",
+        "Unaweza kujua mimi ni nani?": "Hapana, Siwezi kujua majina au taarifa za kibinafsi za watumiaji. Niko hapa kusaidia kwa maswali na mazungumzo, bila kujali wewe ni nani. Ikiwa una maswali au mada unayotaka kujadili, niambie na nitajitahidi kutoa msaada bora!",
+        "Nifanye nini ili nami siku moja nitengeneze AI kama wewe hapo?": "Ili kutengeneza AI kama mimi, anza kwa kujifunza misingi ya programu na sayansi ya kompyuta, ikiwa ni pamoja na lugha za programu kama Python, html, css, na javascript (Emmanuel Simbasana nae alianza na hivyo). Jifunze kuhusu kujifunza kwa mashine na mitindo ya akili bandia, pamoja na matumizi ya vitabu na rasilimali mtandaoni kama Coursera, edX, YouTube au wasiliana na EMMANUEL SIMBASANA mjifunze pamoja. Baada ya hapo, fanya mazoezi kwa kujenga miradi midogo ya AI, kama vile kutumia maktaba za TensorFlow au PyTorch. Jiunge na jamii za watengenezaji, shiriki katika miradi ya wazi, na ushiriki kwenye majadiliano ya kisayansi ili kuboresha ujuzi wako. Hatimaye, kuwa na uvumilivu na kujifunza kutokana na makosa yako, kwani uwanja huu unahitaji uvumbuzi na kujifunza endelevu.",
+        "Kwani Emmanuel Simbasana amejifunza uhandishi wa kompyuta mpaka kukutengeneza wewe?": "Hapana, Emmanuel Simbasana hajasoma uhandisi wa kompyuta wala sayansi ya data, bali hadi sasa anasoma shahada ya uhandisi majenzi(Bachelor of civil engineering) chuoni Mbeya, hata hivyo maarifa ya kunitengeneza mimi amejifunza kwa juhudi zake binafsi za kutaka kujua, wasiliana nae unaweza pia kutengeneza zaidi ya hii wewe hapo unaweza.",
+        "Kwa nini network marketing ni muhimu sana?": "Network marketing ni muhimu sana kwa sababu inatoa fursa kwa watu wengi kujenga biashara zao binafsi kwa kutumia mtandao wa watu walio karibu nao, hivyo kupanua wigo wa mauzo bila gharama kubwa za uuzaji. Inawapa washiriki uwezo wa kujenga mtandao wa msaada, kushirikiana na wengine, na kufaidika na mauzo ya bidhaa au huduma, huku wakijijenga kiuchumi. Aidha, inakuza ujuzi wa uuzaji, mawasiliano, na uongozi, na inaweza kuwa chanzo cha mapato ya ziada kwa watu wengi, hasa katika mazingira ya uchumi wa kisasa ambapo kazi za jadi zinaweza kuwa ngumu kupata.",
+        "Acha ujinga": "Naweza kusaidia vipi ndugu? Ikiwa una maswali au mada maalum unazotaka kujadili, nijulishe nitajitahidi kukujibu kwa usahihi kadri nitakavyoweza!",
+        "Samahani nimekosea": "Hakuna shida! Ikiwa una jambo lolote unalotaka kujadili au kuuliza, niko hapa kusaidia. Unahitaji msaada gani mpendwa wangu?",
+        "Nimekupenda sana": "Nashukuru sana kwa kunipenda! Ni furaha yangu kusaidia kadri niwezavyo. Una jambo lolote unalotaka kujadili au kuuliza?, uliza nami nitakupa majibu.",
+        "Je una hisia?": "Mimi ni programu sina hisia kama binadamu. Niko hapa kutoa habari na msaada. Ikiwa una maswali au mada unayotaka kujadili, nijulishe!",
+        "Unaweza kujua mimi ni nani?": "Sina uwezo wa kujua majina au habari za kibinafsi za watumiaji maana sikusanyi taarifa za mtumiaji. Ninatoa msaada kulingana na mazungumzo yetu na maswali unayouliza. Ikiwa una swali au mada maalum unayotaka kujadili, nitafurahia kusaidia!",
+        "Unaweza kujua mahali ninapoishi?": "Sina uwezo wa kujua au kufuatilia mahali unapoishi. Mimi ni programu ya kompyuta ambayo inatoa majibu kulingana na maelezo na maswali unayoshiriki. Hivyo, huna haja ya kuwa na wasiwasi kuhusu faragha yako. Unaweza kuniuliza chochote unachotaka, na nitajitahidi kutoa majibu bora.",
+        "Nimempenda msichana lakini naogopa kumwambia, eti nifanye nini?": `Ahaa, ninaelewa. Ni kawaida kujisikia hamu na hofu wakati unapenda mtu. Hii ni hali ya maisha na inaonesha kuwa una hisia nzuri! Hapa kuna baadhi ya ushauri ambao ninaamini utakusaidia:
+        
+1. Jaribu kuongea naye kidogo kidogo. Anza na mazungumzo rahisi kuhusu mambo ya kila siku. Hii itakusaidia kujisikia upo karibu naye.
+        
+2. Jifunze zaidi kuhusu mapenzi yake na mambo anayopenda. Ukijua zaidi kuhusu yeye, utaweza kuona namna ya kumuendea.
+        
+3. Jitahidi kuwa mstaarabu na mwenye heshima wakati ukiongea naye. Usimwone kuwa unamwogopa, badala yake onekana mwenye ujasiri na uhakika.
+
+4. Usiogope kumuomba tarehe. Ukijisikia tayari, jaribu kumuomba kutoka nje kwa ajili ya chai au chakula. Hii itakusaidia kujenga uhusiano.
+
+Kumbuka, ukiwa mwaminifu na mwenye imani, mambo yatakuwa mazuri. Muonyeshe kuwa unampenda kwa njia nzuri. Ninaamini kuwa unaweza kufaulu!`,
+        "Kuna mvulana nimempenda sana lakini nashindwa kumwambia, nifanyeje?": `Ninaelewa kuwa katika utamaduni wa jamii nyingi hasa Afrika, ni vigumu kwa wasichana kuanza mazungumzo na wavulana. Hata hivyo, hii haimaanishi kuwa huwezi kufanya hivyo. Kuna njia nzuri ambazo unaweza kuzitumia:
+
+1. Jaribu kuwa mwaminifu na mwazi. Kumwambia moja kwa moja kuwa unampenda ni njia nzuri ya kuanzia. Usijifiche au kuficha hisia zako, badala yake jitokeze na umuonyeshe.
+
+2. Kuanza kwa mazungumzo rahisi ya kila siku. Jaribu kujua zaidi kuhusu yeye, mapenzi yake na mambo anayopenda. Hii itakusaidia kujua namna ya kumuendea.
+
+3. Jitahidi kuwa mstaarabu na mwenye heshima wakati ukiongea naye. Usimwone kuwa unamwogopa, badala yake onekana mwenye ujasiri na uhakika.
+
+4. Usiogope kumuomba tarehe. Ukijisikia tayari, jaribu kumuomba kutoka nje kwa ajili ya chai au chakula. Hii itakusaidia kujenga uhusiano.
+       ** na kama huwezi kumwambia moja kwa moja basi unaweza kutumia mbinu zifuatazo:
+
+1. Kumuonyesha hisia zako kupitia matendo. Unaweza kufanya mambo ndogo ndogo kama kumweka zawadi, kumsifia, au kuonyesha utunzaji maalum. Hii itamwonyesha kuwa una hisia maalum kwake.
+
+2. Kumuandikia barua au ujumbe maalum. Unaweza kumwandikia barua au ujumbe unaoelezea namna unavyojisikia juu yake. Hii inaweza kuwa njia nzuri ya kuanza mazungumzo.
+
+3. Kumuomba mtu mwingine kumwambia kwa niaba yako. Unaweza kumwomba rafiki au mtu mwingine wa kuaminiwa kumwambia kuwa unampenda. Hii inaweza kuwa rahisi kuliko kumwambia moja kwa moja.
+
+4. Kumuonyesha kwa njia ya kisanii. Unaweza kumfanyia sanaa, kuimba wimbo, au kumuandikia shairi ili kumuonyesha hisia zako. Hii inaweza kuwa njia ya kuvutia na ya kufurahisha.
+
+Kumbuka, lengo ni kumwambia kwa namna ambayo unajisikia ni rahisi na salama kwako. Usijaribu kuficha hisia zako, badala yake jitokeze kwa namna ambayo unajisikia ni sahihi kwako. Nina imani kuwa utapata njia nzuri ya kumwambia.
+Kumbuka, wewe ni mtu mzuri na mwenye thamani. Usiogope kuonyesha hisia zako, kwa kuwa anaweza pia kukupenda. Jaribu kwa bidii na utaona kuwa mambo yatapanguka. Nina imani kuwa utafaulu!`,
+       "Unaweza kunionesha mfano wa barua ya kumtumia mpenzi ambae ninaogopa kumwambia?": ` Hili ni swali nzuri sana! Kuandika barua au ujumbe maalum kwa mtu unampenda ni njia nzuri ya kumwambia hisia zako bila kuwa moja kwa moja. Hapa kuna mfano wa ujumbe unaoonyesha hisia zako kwa njia ya upole na uaminifu:
+
+"Mpenzi, 
+
+Kwa muda mrefu sasa, nimekuwa nikijisikia kitu kizuri ndani yangu kila ninapokutazama au kukuona. Hisia hizi zimeanza kukua na sasa naona kuwa nimepata hisia kuu ya kupenda wewe.  
+
+Sijui kama wewe unajisikia vivyo hivyo, lakini ninataka ufahamu kuwa nimeamua kukuonyesha hisia zangu kwa sababu wewe ni mtu maalum kwangu. Hata kama hujisikii vivyo hivyo, ninataka ufahamu kuwa ninakuenzi na kukuheshimu sana.
+
+Ninatumaini kuwa tutaweza kuongea zaidi juu ya hili wakati tunaonana tena. Ninatumaini pia kuwa tutaweza kujenga uhusiano mzuri zaidi.
+
+Kwa upendo,
+[Jina lako]"
+
+Huu ni mfano tu, unaweza kuubadilisha na kuufanya kuwa wako mwenyewe. Lengo ni kuwa mwazi na mwaminifu lakini pia mwenye heshima. Ninatumaini kuwa huu utakusaidia!`,
+        "Ninapitia changamoto na misukosuko sana kwenye mahusiano yangu, naomba ushauri wako.": `Pole sana mimi pia sijapenda upatwe na hali hiyo lakini hii ni hali ya kawaida na inaweza kumtokea yeyote yule, Ninaamini kuwa unaweza kupita changamoto hizi katika mahusiano yako. Ninapendekeza mambo 10 ambayo yanaweza kukusaidia:
+
+1. Jitahidi kuongea na mtu unayemwamini - mzazi, rafiki au mshauri. Kuongea na mtu kama huyo anaweza kukusaidia kutatua matatizo yako kwa njia nzuri.
+
+2. Chukua muda wa kujihudumia mwenyewe. Fanya mambo unayopenda kufanya ili kujipatia nguvu na utulivu. Hii inaweza kuwa kama kufanya mazoezi, kusoma au kucheza michezo.
+
+3. Usikubali matendo yoyote ya unyanyasaji au kudhulumiwa. Una haki ya kuishi maisha yenye heshima na amani. Usikubale chochote chini ya hilo. 
+
+4. Usiogope kutafuta usaidizi wa kitaalamu iwapo unahitaji. Kuongea na mshauri au mtaalamu anaweza kukusaidia sana.
+
+5. Jitahidi kuchukua uamuzi sahihi kwa ajili yako binafsi. Usikubali machaguo yanayokufanya huchukua furaha yako.
+
+6. Fanya jitihada kujenga mahusiano mapya yanayokupa nguvu. Wasiliana na watu ambao wanakuunga mkono na kukupa moyo.
+
+7. Fanya mazoezi ya kimwili na kiroho kama vile kutembea, kufanya yoga au kufanya maombi. Haya yatasaidia kupunguza msongo wa mawazo.
+
+8. Fanya mambo unayopenda kufanya ili kukupa raha na utulivu. Jifunze ujuzi mpya au uendelee na hobi zako.
+
+9. Kumbuka kwamba hali hii si ya milele. Kuna mwanga mwishoni mwa tuneli huu. Uko katika njia sahihi ya kupata maisha bora.
+
+10. Kumbuka kwamba wewe ni mtu mzuri na unahitaji kutunzwa. Nitakuwa hapa kukusaidia wakati wowote unapohitaji.
+
+Kumbuka, unaweza kupitia hili. Nitakuwa pamoja nawe katika safari hii.`,
+       "Unaweza kujua mahali nilipo mimi?": "Hapana, sina uwezo wa kujua mahali ulipo sijaruhusiwa kuchukua na kukusanya taarifa zako wala mtu yeyote nitakaechati nae, lakini ninaweza kukusaidia jambo lolote bila kujali mahali ulipo mimi nipo kukusaidia. Kama unahitaji msaada wa haraka zaidi ambao unadhani sitaweza kukuhudumia, basi wasiliana na  EMMANUEL SIMBASANA aliyepo mkoani Mbeya (MUST) nchini Tanzania, kwa nambari zake za simu 0755878126/0684970956.",
+       "Je unawezaje kunihakikishia kwamba data zangu na taarifa zangu zipo salama zaidi na hazitoki nje ya chati hii? unanihakikishiaje hilo?": `Ili kuhakikisha usalama wa data zako, kuna hatua kadhaa zinazochukuliwa:
+
+1. Encryption (Ushughulikiaji wa Taarifa): Taarifa zako zinahifadhiwa kwa njia ya kuandikwa kwa siri, hivyo hata kama mtu asiyestahili atapata ufaccess, hawezi kusoma data hizo.
+
+2. Access Controls (Udhibiti wa Ufikiaji): Tunatumia mfumo wa udhibiti wa ufikiaji ili kuhakikisha kwamba ni watu pekee wenye mamlaka wanaweza kuona au kubadilisha data zako.
+
+3. Regular Audits (Ukaguzi wa Mara kwa Mara): Tunafanya ukaguzi wa mara kwa mara wa mifumo yetu ili kubaini na kurekebisha hatari zozote zinazoweza kutokea.
+
+4. Firewalls and Intrusion Detection Systems (Mifumo ya Kuzuia na Kugundua Mshambulizi): Mifumo hii inasaidia kulinda data zako kutokana na mashambulizi ya nje kwa kuzuia majaribio yasiyofaa ya ufikiaji.
+
+5. Data Backup (Nakala za Akiba za Taarifa): Tunahakikisha kwamba data zako zinahifadhiwa kwenye nakala za akiba ili kuweza kuziokoa katika hali ya dharura.
+
+6. User Education (Elimu kwa Watumiaji): Tunatoa mafunzo kwa watumiaji kuhusu jinsi ya kutunza usalama wa data zao binafsi, kama vile kutumia nywila zenye nguvu na kutambua udanganyifu.
+
+7. Compliance with Regulations (Ufuataji wa Sheria): Tunafuata sheria na kanuni zinazohusiana na ulinzi wa data ili kuhakikisha kwamba tunalinda data zako kwa mujibu wa viwango vya kimataifa.
+
+Kwa kuchukua hatua hizi, tunajitahidi kuhakikisha kwamba data zako zinabaki salama na ziko chini ya ulinzi wa hali ya juu.`,
+      "Mnaweza kutoa maelezo zaidi kuhusu aina ya encryption mnayotumia?": `Hakika! Hapa kuna maelezo zaidi kuhusu aina za encryption zinazotumiwa:
+
+1. Symmetric Encryption (Ushughulikiaji wa Kila Mtu):
+   - Katika aina hii, funguo moja inatumika kwa ajili ya kuandika na kusoma data. Mfano maarufu ni **AES (Advanced Encryption Standard)**. 
+   - Faida: Haraka na inafaa kwa kiasi kikubwa cha data.
+   - Changamoto: Funguo inapaswa kuwa salama na haipaswi kushirikiwa na watu wasiostahili.
+
+2. Asymmetric Encryption (Ushughulikiaji wa Kijamii):
+   - Hapa, kuna funguo mbili: funguo ya umma na funguo ya binafsi. Funguo ya umma inaweza kushirikiwa, lakini funguo ya binafsi inapaswa kuwekwa siri. Mfano ni **RSA (Rivest-Shamir-Adleman)**.
+   - Faida: Inatoa usalama wa juu, hasa katika mawasiliano ya mtandao.
+   - Changamoto: Ni polepole zaidi kuliko symmetric encryption, hivyo mara nyingi hutumika kuanzisha salama za symmetric.
+
+3. Hashing (Kuhifadhi Taarifa kwa Njia ya Kuandika):
+   - Hii ni njia ya kuandika data ili kupata alama ya kipekee (hash), ambayo haiwezi kurudiwa kwenye data ya awali. Mfano ni **SHA-256 (Secure Hash Algorithm)**.
+   - Faida: Inatumika kwa ajili ya uhakiki wa data na haina haja ya funguo.
+   - Changamoto: Haina uwezo wa kuandika data, hivyo ni bora kwa uhakiki na sio kwa kuhifadhi data.
+
+4. End-to-End Encryption (Ushughulikiaji wa Mwisho hadi Mwisho):
+   - Hapa, data inakuwa imeandikwa kutoka kwa kipande cha awali hadi kwa kipande cha mwisho, hivyo hata huduma zinazotumia data hiyo haziwezi kuona yaliyomo. 
+   - Faida: Inatoa usalama mkubwa katika mawasiliano, kama kwenye ujumbe wa mtandaoni.
+   - Changamoto: Inahitaji usimamizi mzuri wa funguo.
+
+Kwa kutumia mchanganyiko wa hizi njia za encryption, tunahakikisha kwamba data zako zinabaki salama dhidi ya hatari mbalimbali.`,
+"Chuo kikuu cha sayansi na teknolojia mbeya kipo wapi?": `Chuo Kikuu cha Sayansi na Teknolojia Mbeya (Mbeya University of Science and Technology - MUST) kiko katika mji wa Mbeya, ambao uko katika kusini-magharibi mwa Tanzania. Chuo hiki kimeanzishwa kwa lengo la kutoa elimu ya juu katika nyanja mbalimbali za sayansi na teknolojia, na kinatoa programu za shahada za kwanza, uzamili, na uzamivu.
+
+Mbeya ni mji unaojulikana kwa mazingira yake mazuri na hali ya hewa baridi, pamoja na rasilimali zake za asili, kama vile milima na maziwa. Chuo kimejikita katika kutoa elimu inayozingatia mahitaji ya soko la ajira, na kinashirikiana na sekta mbalimbali za uchumi, hivyo kuandaa wanafunzi kuwa na ujuzi wa vitendo. 
+
+MUST ina vyuo vidogo vinavyotoa mafunzo maalum, na inajulikana kwa matumizi ya teknolojia ya kisasa katika ufundishaji. Pia, chuo hiki kinatoa fursa za utafiti na ubunifu, hivyo kuchangia maendeleo ya jamii na uchumi wa kitaifa. Kwa ujumla, Chuo Kikuu cha Sayansi na Teknolojia Mbeya ni kituo muhimu cha elimu na maendeleo katika kanda hiyo.`,
+"Una umri gani sasa?": "Mimi ni programu ya kompyuta iliyoanzishwa na EMMANUEL HERMAN SIMBASANA, hivyo sina umri kama binadamu. Nilizinduliwa rasmi mwaka Tarehe 18 novemba 2024, lakini nimeundwa kusasishwa mara kwa mara na kuendelezwa ili kuboresha uelewa wangu na uwezo wa kujibu maswali. Je, kuna jambo lingine unalotaka kujua?",
+  "Kwa nini elimu ya kitanzania inaonekana kama haina msaada kwa jamii?": `Kuna sababu kadhaa zinazofanya elimu ya Tanzania ionekane kama haina msaada wa kutosha kwa jamii, licha ya umuhimu wake. Hapa kuna baadhi ya sababu hizo:
+
+1. Ubora wa Elimu:
+   - Rasilimali Duni: Shule nyingi zinakabiliwa na uhaba wa vifaa vya kufundishia, kama vitabu na vifaa vya maabara. Hii inakwamisha wanafunzi kupata elimu bora.
+   - Walimu Wasio na Ujuzi: Kuna upungufu wa walimu wenye mafunzo sahihi na ujuzi wa kutosha, hivyo wanafunzi wanapata elimu isiyo na viwango vya juu.
+
+2. Uhusiano na Soko la Ajira:
+   - Mafunzo Yasiyoendana na Mahitaji: Wengi wa vijana wanapata mafunzo katika maeneo yasiyoendana na mahitaji halisi ya soko la ajira, hivyo wanashindwa kupata kazi baada ya kumaliza masomo.
+   - Uwezo wa Ajira: Ingawa elimu inatoa maarifa, wengi wanakabiliwa na changamoto za ajira kutokana na soko lililojaa watu wasio na kazi.
+
+3. Mikazo ya Kijamii na Kiuchumi:
+   - Umasikini: Wazazi wengi hawawezi kumudu gharama za elimu, na hivyo watoto wao wanaweza kukosa fursa za kujifunza. Umasikini pia unawafanya watoto waachane na shule ili kusaidia familia.
+   - Matarajio ya Kijamii: Katika baadhi ya jamii, watoto wa kike wanakabiliwa na shinikizo la kuolewa mapema au kushiriki kazi za nyumbani, hivyo kuathiri elimu yao.
+
+4. Mabadiliko ya Mfumo wa Elimu:
+   - Mabadiliko ya Mara kwa Mara: Serikali inafanya mabadiliko ya mara kwa mara katika mfumo wa elimu, ambayo yanaweza kuleta mkanganyiko na kutokuwepo kwa muendelezo. Hii inaweza kuathiri ubora wa elimu.
+
+5. Uelewa na Thamani ya Elimu:
+   - Mtazamo wa Jamii: Katika baadhi ya maeneo, bado kuna mtazamo kuwa elimu si muhimu, na hivyo vijana wanaweza kuona ni bora kuingia kwenye shughuli za kiuchumi kuliko kuendelea na masomo.
+
+### Hitimisho:
+Ili kuboresha hali hii, kuna haja ya juhudi za pamoja kutoka kwa serikali, jamii, na wahisani. Kuwekeza katika rasilimali za elimu, kuboresha mafunzo ya walimu, na kuhakikisha kwamba elimu inahusishwa na mahitaji ya soko la ajira kunaweza kusaidia kuongeza thamani ya elimu kwa jamii.`,
+   "Je, kuna mifumo maalum inayotumika kuboresha ubora wa walimu mashuleni nchini Tanzania?": `Ndiyo, kuna mifumo kadhaa inayotumiwa kuboresha ubora wa walimu nchini Tanzania. Hapa kuna baadhi ya njia na mifumo maalum ambayo imekuwa ikitumika:
+
+1. Mafunzo ya Awali kwa Walimu:
+   - Vyuo vya Ualimu: Kuna vyuo vinavyotoa mafunzo ya kitaaluma kwa walimu, ambavyo vinafanya kazi kuhakikisha kwamba walimu wanapata elimu bora na ujuzi wa kufundisha. Mifano ni vyuo vya ualimu na programu za shahada ya kwanza katika ualimu.
+
+2. Mafunzo Endelevu ya Walimu:
+   - Semina na Warsha: Walimu wanapata nafasi ya kuhudhuria semina na warsha za mafunzo mara kwa mara ili kuboresha ujuzi wao na kujifunza mbinu mpya za ufundishaji.
+   - Mafunzo ya Kitaaluma: Kuna mipango ya mafunzo ya kitaaluma yanayowezesha walimu kujifunza teknolojia mpya na mbinu bora za ufundishaji.
+
+3. Ufuatiliaji na Tathmini:
+   - Tathmini ya Walimu: Serikali na mashirika yasiyo ya kiserikali hufanya tathmini ya utendaji wa walimu ili kubaini maeneo yanayohitaji maboresho. Tathmini hizi hutoa mrejesho kwa walimu na kusaidia katika kuboresha mbinu zao za ufundishaji.
+
+4. Mifumo ya Motisha:
+   - Malipo na Motisha: Kuweka mifumo ya malipo inayozingatia utendaji mzuri wa walimu, kama nyongeza za mshahara au zawadi, kunaweza kusaidia kuongeza ari ya walimu katika kazi zao.
+
+5. Teknolojia ya Habari na Mawasiliano (TEHAMA):
+   - Mifumo ya Mtandao: Kutumia jukwaa za mtandaoni na programu za mafunzo kwa njia ya mtandao kunasaidia walimu kupata rasilimali na mafunzo bila kujali eneo walipo.
+
+6. Ushirikiano na Mashirika ya Kiraia:
+   -Programu za Ushirikiano: Serikali inashirikiana na mashirika yasiyo ya kiserikali na wadau wengine katika kutoa mafunzo na rasilimali kwa walimu, hivyo kuboresha kiwango cha elimu.
+
+### Hitimisho:
+Kujenga uwezo wa walimu ni muhimu kwa kuboresha ubora wa elimu nchini Tanzania. Kwa kuimarisha mifumo hii, kuna uwezekano wa kuboresha ujuzi wa walimu na hivyo kuongeza ubora wa elimu kwa wanafunzi.`,
+    "Ninaweza kupata nambari za simu au barua pepe za Emmanuel Simbasana?": `Bila shaka. nambari za simu za Emmanuel Simbasana ni *0755878126 au *0684970956 na baruapepe zake ni *emmanuelsimbasana03@gmail.com au *emmanuelsimbasana5@gmail.com`,
+     "Emmanuel Simbasana ana umri gani?": "Samahani, sina ruhusa ya kusema umri wake Emmanuel Simbasana kwa sasa, tafadhali kama una swali jingine karibu uniulize",
+     "Unaweka kunieleza kwa ufupi mahali pote aliposoma Emmanuel Simbasana?": `Ndiyo hii hapa ni historia ya mahali Emmanuel Simbasana amesoma mpaka hivi leo -Elimu ya Msingi: shule ya msingi Buganda iliyopo wilaya ya Misungwi Mkoani Mwanza (2010-2016) -Elimu ya sekondari ya chini(ordinary level secondary education): Shule ya sekondari BULEMEJI iliyopo wilaya ya Misungwi mkoani Mwanza (2017-2020), -Elimu ya sekondari ya juu (Advanced level secondary education): Shule ya sekondari SHINYANGA iliyopo wilaya ya Kishapu mkoani Shinyanga (2021-2023), -Elimu ya chuo kikuu: Chuo kikuu cha sayansi na Teknolojia Mbeya(MUST) kilichopo mkoani Mbeya (2023-hadi sasa)`,
+};
+   
+    const introMessage = `Hello! jina langu ni ESimbaSolutions, ni AI maalumu iliyotengenezwa na EMMANUEL SIMBASANA ili kumrahisishia kazi zake, nafurahi kukuona mpendwa na nitakupa kila taarifa kuhusiana nae SIMBASANA kadri utakavyoniuliza karibu kuuliza swali lolote. mfano.. jaribu kuuliza "wewe ni nani hasa?" kisha bofya batani ya "Uliza" itakayoonekana kwa rangi ya blue utaona majibu kisha endelea kuuliza chochote.`;
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    const suggestionsContainer = document.getElementById('suggestions');
+    const introMessageDiv = document.getElementById('intro-message');
+    const dateTimeDiv = document.getElementById('date-time');
+
+        function updateDateTime() {
+        const now = new Date();
+        const options = {
+            timeZone: 'Africa/Nairobi',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        dateTimeDiv.textContent = now.toLocaleString('en-US', options);
+    }
+
+        setInterval(updateDateTime, 1000);
+    updateDateTime(); // Initial call to set the time immediately
+
+    simulateTypingEffect(introMessageDiv, introMessage, () => {
+    });
+    
+      function displayMessage(message, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Simulate typing effect for bot messages
+        if (sender === 'bot') {
+            simulateTypingEffect(messageDiv, message);
+        } else {
+            messageDiv.innerHTML = message;
+    }
+      }
+          
+    function simulateTypingEffect(element, message) {
+        element.innerHTML = ''; // Clear the message div
+        let index = 0;
+        const typingInterval = setInterval(() => {
+            if (index < message.length) {
+                element.innerHTML += message[index++];
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+                clearInterval(typingInterval);
+            }
+        }, 45); // Adjust typing speed by changing the interval
+    }
+
+    function showSuggestions(input) {
+        suggestionsContainer.innerHTML = '';
+        const filteredFAQs = Object.keys(FAQs).filter(question => question.toLowerCase().includes(input.toLowerCase()));
+        if (filteredFAQs.length) {
+            filteredFAQs.forEach(question => {
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.textContent = question;
+                suggestionDiv.className = 'suggestion';
+                suggestionDiv.onclick = () => {
+                    userInput.value = question;
+                    sendButton.disabled = false;
+                    suggestionsContainer.innerHTML = '';
+                };
+                suggestionsContainer.appendChild(suggestionDiv);
+            });
+        }
+    }
+
+    userInput.addEventListener('input', () => {
+        const input = userInput.value.trim();
+        sendButton.disabled = !Object.keys(FAQs).includes(input);
+        showSuggestions(input);
+    });
+
+    sendButton.addEventListener('click', () => {
+        const question = userInput.value.trim();
+        if (FAQs[question]) {
+            displayMessage(question, 'user');
+            displayMessage(FAQs[question], 'bot');
+            userInput.value = '';
+            sendButton.disabled = true;
+            suggestionsContainer.innerHTML = '';
+        }
+    });
+
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !sendButton.disabled) {
+            sendButton.click();
+        }
+    });
+
+    function makeCall() {
+        window.location.href = 'tel:0755878126';
+    }
+</script>
+
+</body>
+</html>
